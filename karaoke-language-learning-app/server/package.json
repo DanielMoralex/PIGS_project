@@ -1,21 +1,19 @@
 {
-  "name": "server",
+  "name": "database-test",
   "version": "1.0.0",
-  "description": "",
+  "description": "PDIGS database",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon src/index.js",
-  "start": "node src/index.js"
-},
-  "keywords": [],
+    "firebase": "node firebase.js",
+    "song-database": "node songs.js",
+    "test": "echo \"Hello world!\""
+  },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cors": "^2.8.6",
-    "dotenv": "^17.3.1",
-    "express": "^5.2.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@aws-sdk/client-s3": "^3.1007.0",
+    "@aws-sdk/s3-request-presigner": "^3.1008.0",
+    "firebase": "^12.10.0"
   }
 }

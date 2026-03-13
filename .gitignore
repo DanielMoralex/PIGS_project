@@ -39,3 +39,7 @@ coverage/
 
 # optional lock files (usually you keep package-lock.json, but if your team decides otherwise)
 # package-lock.json
+
+# Backup files
+*.bak
+
