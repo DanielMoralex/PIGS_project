@@ -1,0 +1,19 @@
+{
+  "name": "database-test",
+  "version": "1.0.0",
+  "description": "PDIGS database",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "firebase": "node firebase.js",
+    "song-database": "node songs.js",
+    "test": "echo \"Hello world!\""
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1007.0",
+    "@aws-sdk/s3-request-presigner": "^3.1008.0",
+    "firebase": "^12.10.0"
+  }
+}
