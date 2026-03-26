@@ -5,8 +5,8 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "firebase": "node firebase.js",
-    "song-database": "node songs.js",
+    "firebase": "node src/firebase.js",
+    "song-database": "node src/songs.js",
     "test": "echo \"Hello world!\""
   },
   "author": "",
