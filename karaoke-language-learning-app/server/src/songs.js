@@ -1,4 +1,4 @@
-import {
+npimport {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
