@@ -1,3 +1,5 @@
+import { S } from "vitest/dist/chunks/config.d.D2ROskhv.js";
+
 export interface Song {
   id: string;
   title: string;
@@ -8,6 +10,7 @@ export interface Song {
   bpm: number;
   lyrics: LyricLine[];
   genre: string;
+  audioUrl?: string;
 }
 
 export interface LyricLine {
@@ -23,6 +26,7 @@ export const LANGUAGES = [
   { code: 'ko', name: 'Korean', flag: '🇰🇷' },
   { code: 'pt', name: 'Portuguese', flag: '🇧🇷' },
   { code: 'de', name: 'German', flag: '🇩🇪' },
+  { code: 'en', name: 'English', flag: '🇺🇸' },
 ];
 
 export const songs: Song[] = [
@@ -145,4 +149,58 @@ export const songs: Song[] = [
       { time: 21, text: 'Und dass so was von so was kommt', translation: 'And that something like this comes from something like that' },
     ],
   },
+  {
+    id: 'die-with-a-smile',
+    title: 'Die With A Smile',
+    artist: 'Lady Gaga & Bruno Mars',
+    language: 'en',
+    languageFlag: '🇺🇸',
+    difficulty: 'easy',
+    bpm: 72,
+    genre: 'Pop',
+    audioUrl: '/src/assets/audio/die-with-a-smile.mp3',
+    lyrics: [
+      { time: 8.63,  text: "I, I just woke up from a dream",                                    translation: "" },
+      { time: 15.56, text: "Where you and I had to say goodbye",                                 translation: "" },
+      { time: 20.27, text: "And I don't know what it all means",                                 translation: "" },
+      { time: 24.78, text: "But since I survived I realized",                                    translation: "" },
+      { time: 29.07, text: "Wherever you go that's where I'll follow",                           translation: "" },
+      { time: 33.87, text: "Nobody's promised tomorrow",                                         translation: "" },
+      { time: 38.50, text: "So imma love you every night like it's the last night",              translation: "" },
+      { time: 42.54, text: "Like it's the last night",                                           translation: "" },
+      { time: 44.71, text: "If the world was ending I'd wanna be next to you",                  translation: "" },
+      { time: 53.68, text: "If the party was over and our time on earth was through",            translation: "" },
+      { time: 62.77, text: "I'd wanna hold you just for a while",                               translation: "" },
+      { time: 67.44, text: "And die with a smile",                                               translation: "" },
+      { time: 71.99, text: "If the world was ending I'd wanna be next to you",                  translation: "" },
+      { time: 81.04, text: "Woo ooh",                                                            translation: "" },
+      { time: 85.08, text: "Ooh lost",                                                           translation: "" },
+      { time: 88.59, text: "Lost in the words that we scream",                                   translation: "" },
+      { time: 92.84, text: "I don't even wanna do this anymore",                                 translation: "" },
+      { time: 97.64, text: "Cuz you already know what you mean to me",                           translation: "" },
+      { time: 101.23, text: "And our love is the only war worth fighting for",                   translation: "" },
+      { time: 106.82, text: "Wherever you go that's where I'll follow",                          translation: "" },
+      { time: 111.44, text: "Nobody's promised tomorrow",                                        translation: "" },
+      { time: 115.91, text: "So imma love you every night like it's the last night",             translation: "" },
+      { time: 119.83, text: "Like it's the last night",                                          translation: "" },
+      { time: 122.29, text: "If the world was ending I'd wanna be next to you",                 translation: "" },
+      { time: 131.17, text: "If the party was over",                                             translation: "" },
+      { time: 133.92, text: "And our time on earth was through",                                 translation: "" },
+      { time: 140.22, text: "I'd wanna hold you",                                               translation: "" },
+      { time: 142.60, text: "Just for a while",                                                  translation: "" },
+      { time: 144.81, text: "And die with a smile",                                              translation: "" },
+      { time: 149.57, text: "If the world was ending I'd wanna be next to you",                 translation: "" },
+      { time: 158.12, text: "Right next to you",                                                 translation: "" },
+      { time: 162.95, text: "Next to you",                                                       translation: "" },
+      { time: 167.46, text: "Right next to you",                                                 translation: "" },
+      { time: 190.48, text: "If the world was ending I'd wanna be next to you",                 translation: "" },
+      { time: 199.57, text: "If the party was over and our time on earth was through",           translation: "" },
+      { time: 208.67, text: "I'd wanna hold you just for a while",                              translation: "" },
+      { time: 213.34, text: "And die with a smile",                                              translation: "" },
+      { time: 217.97, text: "If the world was ending I'd wanna be next to you",                 translation: "" },
+      { time: 226.68, text: "If the world was ending I'd wanna be next to you",                 translation: "" },
+      { time: 239.24, text: "I'd wanna be next to you",                                         translation: "" },
+    ],
+  },
+
 ];
