@@ -3,6 +3,13 @@ import { useParams, Link } from 'react-router-dom';
 import { songs } from '@/data/songs';
 import Y2KHeader from '@/components/Y2KHeader';
 import Y2KFooter from '@/components/Y2KFooter';
+import dieWithASmile from '@/assets/audio/die-with-a-smile.mp3';
+import despacito from '@/assets/audio/despacito.mp3';
+
+const audioMap: Record<string, string> = {
+  'die-with-a-smile': dieWithASmile,
+  'despacito': despacito
+};
 
 const SingMode = () => {
   const { songId } = useParams();
@@ -17,6 +24,7 @@ const SingMode = () => {
   const recognitionRef = useRef<any>(null);
   const isPlayingRef = useRef(false);
   const prevLineRef = useRef(0);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const stopListening = useCallback(() => {
     if (recognitionRef.current) {
@@ -84,27 +92,48 @@ const SingMode = () => {
     setIsListening(true);
   }, [song?.language, stopListening]);
 
-  const handlePlay = () => {
+  const handlePlay = async () => {
     if (!song) {
       console.log("Cannot start singing: song not found");
       return;
     }
+
     console.log("Starting song:", song.title);
+
+    // reset audio to beginning
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0;
+
+      try {
+        await audioRef.current.play();
+      } catch (err) {
+        console.log("Audio play failed:", err);
+      }
+    }
+
     setIsPlaying(true);
     isPlayingRef.current = true;
     setCurrentLine(0);
     setTranscript('');
     setScores({});
     startTimeRef.current = Date.now();
+
     startListening();
 
     timerRef.current = setInterval(() => {
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
+
       let lineIndex = -1;
+
       for (let i = song.lyrics.length - 1; i >= 0; i--) {
-        if (song.lyrics[i].time <= elapsed) { lineIndex = i; break; }
+        if (song.lyrics[i].time <= elapsed) {
+          lineIndex = i;
+          break;
+        }
       }
+
       if (lineIndex >= 0) setCurrentLine(lineIndex);
+
       if (elapsed > song.lyrics[song.lyrics.length - 1].time + 8) {
         handleStop();
       }
@@ -113,27 +142,18 @@ const SingMode = () => {
 
   const handleStop = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
+
+    // stop audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+
     setIsPlaying(false);
     isPlayingRef.current = false;
+
     stopListening();
   }, [stopListening]);
-
-  const scoreCurrentLine = () => {
-    if (!song || !transcript){
-      console.log("Cannot score line: missing song or transcript");
-
-      return;
-    }
-    console.log("Song:", song);
-    const expected = song.lyrics[currentLine].text.toLowerCase().replace(/[^\w\s]/g, '');
-    const spoken = transcript.toLowerCase().replace(/[^\w\s]/g, '');
-    const expectedWords = expected.split(/\s+/);
-    const spokenWords = spoken.split(/\s+/);
-    const matches = expectedWords.filter(w => spokenWords.includes(w)).length;
-    const score = Math.round((matches / expectedWords.length) * 100);
-    setScores(prev => ({ ...prev, [currentLine]: score }));
-    setTranscript('');
-  };
 
   useEffect(() => {
     return () => {
@@ -223,6 +243,16 @@ const SingMode = () => {
         </div>
 
         {/* Controls */}
+        {/* Audio player */}
+        <div className="bevel-box p-3 mb-4 flex items-center gap-3">
+          <span className="font-pixel text-[9px] text-y2k-yellow">🎵 AUDIO:</span>
+          <audio ref={audioRef} controls className="flex-1 h-8" src={audioMap[song.id] ?? ''}>
+            Your browser does not support audio.
+          </audio>
+          {isPlaying && (
+              <span className="font-pixel text-[9px] text-y2k-lime blink">▶ PLAYING</span>
+          )}
+        </div>
         <div className="bevel-box p-4 mb-4 flex items-center justify-center gap-4">
           {!isPlaying ? (
             <button onClick={handlePlay} className="bevel-box px-6 py-2 font-pixel text-[10px] text-y2k-lime hover:text-y2k-yellow transition-colors">
