@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import AuthModal from './AuthModal';
 
 const Y2KHeader = () => {
   const [visitors, setVisitors] = useState(0);
+  const [showAuth, setShowAuth] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const count = parseInt(localStorage.getItem('y2k-visitors') || '0') + 1;
@@ -21,6 +26,26 @@ const Y2KHeader = () => {
 
       <div className="bevel-box p-4 star-bg">
         <div className="flex items-center justify-between flex-wrap gap-4">
+          {/* Left: login/profile button */}
+          <div className="flex items-center gap-2">
+            {user ? (
+              <button
+                onClick={() => navigate('/profile')}
+                className="bevel-box px-2 py-1 font-pixel text-[8px] text-y2k-lime hover:text-y2k-yellow transition-colors"
+              >
+                👾 {user.username}
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                className="bevel-box px-2 py-1 font-pixel text-[8px] text-y2k-cyan hover:text-y2k-yellow transition-colors"
+              >
+                🔑 LOGIN
+              </button>
+            )}
+          </div>
+
+          {/* Center: logo */}
           <Link to="/" className="flex items-center gap-3 no-underline">
             <span className="text-4xl animate-spin-slow">🎤</span>
             <div>
@@ -33,6 +58,7 @@ const Y2KHeader = () => {
             </div>
           </Link>
 
+          {/* Right: nav */}
           <nav className="flex gap-2 flex-wrap">
             <Link to="/" className="bevel-box px-3 py-1 text-y2k-yellow hover:text-y2k-lime no-underline text-sm font-retro transition-colors">
               🏠 HOME
@@ -47,6 +73,9 @@ const Y2KHeader = () => {
           </div>
         </div>
       </div>
+
+      {/* Auth modal */}
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </header>
   );
 };

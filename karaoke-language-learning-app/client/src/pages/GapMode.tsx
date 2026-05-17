@@ -1,48 +1,46 @@
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { songs } from '@/data/songs';
+import { useAuth } from '@/context/AuthContext';
 import Y2KHeader from '@/components/Y2KHeader';
 import Y2KFooter from '@/components/Y2KFooter';
 import dieWithASmile from '@/assets/audio/die-with-a-smile.mp3';
+import despacito from '@/assets/audio/despacito.mp3';
 
 const audioMap: Record<string, string> = {
   'die-with-a-smile': dieWithASmile,
+  'despacito': despacito
 };
 
 function getGapWords(text: string): { words: string[]; gapIndices: number[] } {
   const words = text.split(/\s+/);
-  const gapIndices: number[] = [];
-  words.forEach((_, i) => {
-    if (i % 3 === 1 || (words.length > 4 && i % 3 === 2 && i > 2)) {
-      gapIndices.push(i);
-    }
-  });
-  if (gapIndices.length === 0 && words.length > 1) gapIndices.push(1);
-  return { words, gapIndices };
+  if (words.length <= 1) return { words, gapIndices: [] };
+  // Pick one word roughly in the middle, avoiding first and last
+  const gapIndex = Math.floor(words.length / 2);
+  return { words, gapIndices: [gapIndex] };
 }
 
 const GapMode = () => {
   const { songId } = useParams();
   const song = songs.find(s => s.id === songId);
+  const { user, addToHistory, toggleFavorite } = useAuth();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const lineRefs = useRef<Record<number, HTMLDivElement | null>>({});  // 👈 NEW
+  const lineRefs = useRef<Record<number, HTMLDivElement | null>>({});
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-
     const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
-
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
-
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('play', handlePlay);
@@ -50,7 +48,34 @@ const GapMode = () => {
     };
   }, []);
 
-  // 👇 NEW: scroll active line into center when it changes
+  const gapData = useMemo(() => {
+    if (!song) return [];
+    return song.lyrics.map((line, lineIdx) => {
+      const { words, gapIndices } = getGapWords(line.text);
+      return { lineIdx, time: line.time, text: line.text, translation: line.translation, words, gapIndices };
+    });
+  }, [song]);
+
+  const allGapKeys = useMemo(() => {
+    return gapData.flatMap(line =>
+      line.gapIndices.map(gi => `${line.lineIdx}-${gi}`)
+    );
+  }, [gapData]);
+
+  const handleKeyDown = (e: React.KeyboardEvent, key: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const currentIdx = allGapKeys.indexOf(key);
+      const nextKey = allGapKeys[currentIdx + 1];
+      if (nextKey && inputRefs.current[nextKey]) {
+        inputRefs.current[nextKey]?.focus();
+      } else {
+        // Last gap — submit
+        handleSubmit();
+      }
+    }
+  };
+
   const activeLineIdx = useMemo(() => {
     if (!song) return -1;
     let active = -1;
@@ -70,14 +95,6 @@ const GapMode = () => {
     }
   }, [activeLineIdx]);
 
-  const gapData = useMemo(() => {
-    if (!song) return [];
-    return song.lyrics.map((line, lineIdx) => {
-      const { words, gapIndices } = getGapWords(line.text);
-      return { lineIdx, time: line.time, text: line.text, translation: line.translation, words, gapIndices };
-    });
-  }, [song]);
-
   const activeWordIdx = useMemo(() => {
     if (!song || activeLineIdx < 0) return -1;
     const line = gapData[activeLineIdx];
@@ -92,7 +109,25 @@ const GapMode = () => {
     setAnswers(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = () => setSubmitted(true);
+  // Count gaps before handleSubmit so it's available inside it
+  let totalGaps = 0;
+  let correctGaps = 0;
+  gapData.forEach(line => {
+    line.gapIndices.forEach(gi => {
+      totalGaps++;
+      const key = `${line.lineIdx}-${gi}`;
+      const answer = (answers[key] || '').trim().toLowerCase();
+      const expected = line.words[gi].toLowerCase().replace(/[^\w\s]/g, '');
+      if (answer === expected) correctGaps++;
+    });
+  });
+
+  const handleSubmit = () => {
+    setSubmitted(true);
+    if (user && song) {
+      addToHistory(song.id, correctGaps, totalGaps);
+    }
+  };
 
   const handleReset = () => {
     setAnswers({});
@@ -102,6 +137,8 @@ const GapMode = () => {
       setCurrentTime(0);
     }
   };
+
+  const isFavorite = user?.favorites.includes(song?.id ?? '') ?? false;
 
   if (!song) {
     return (
@@ -118,22 +155,11 @@ const GapMode = () => {
     );
   }
 
-  let totalGaps = 0;
-  let correctGaps = 0;
-  gapData.forEach(line => {
-    line.gapIndices.forEach(gi => {
-      totalGaps++;
-      const key = `${line.lineIdx}-${gi}`;
-      const answer = (answers[key] || '').trim().toLowerCase();
-      const expected = line.words[gi].toLowerCase().replace(/[^\w\s]/g, '');
-      if (answer === expected) correctGaps++;
-    });
-  });
-
   return (
     <div className="min-h-screen flex flex-col">
       <Y2KHeader />
       <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-6">
+
         {/* Song info */}
         <div className="bevel-box p-4 mb-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
@@ -143,21 +169,29 @@ const GapMode = () => {
               </h2>
               <p className="font-retro text-y2k-pink">{song.artist}</p>
             </div>
-            <Link to="/" className="bevel-box px-3 py-1 text-[9px] font-pixel text-y2k-cyan no-underline">
-              ← BACK
-            </Link>
+            <div className="flex items-center gap-2">
+              {/* Favorite button — only shown when logged in */}
+              {user && (
+                <button
+                  onClick={() => toggleFavorite(song.id)}
+                  className="bevel-box px-2 py-1 font-pixel text-[9px] transition-colors hover:text-y2k-yellow"
+                  style={{ color: isFavorite ? 'hsl(var(--y2k-yellow))' : 'hsl(var(--muted-foreground))' }}
+                  title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                  {isFavorite ? '⭐ SAVED' : '☆ SAVE'}
+                </button>
+              )}
+              <Link to="/" className="bevel-box px-3 py-1 text-[9px] font-pixel text-y2k-cyan no-underline">
+                ← BACK
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* Audio player */}
         <div className="bevel-box p-3 mb-4 flex items-center gap-3">
           <span className="font-pixel text-[9px] text-y2k-yellow">🎵 AUDIO:</span>
-          <audio
-            ref={audioRef}
-            controls
-            className="flex-1 h-8"
-            src={audioMap[song.id] ?? ''}
-          >
+          <audio ref={audioRef} controls className="flex-1 h-8" src={audioMap[song.id] ?? ''}>
             Your browser does not support audio.
           </audio>
           {isPlaying && (
@@ -186,7 +220,7 @@ const GapMode = () => {
             return (
               <div
                 key={line.lineIdx}
-                ref={(el) => (lineRefs.current[line.lineIdx] = el)}  // 👈 NEW
+                ref={(el) => (lineRefs.current[line.lineIdx] = el)}
                 className={`bevel-box-inset p-3 transition-all duration-300 ${
                   isActiveLine ? 'border-y2k-yellow shadow-[0_0_8px_2px_rgba(255,220,0,0.3)]' : ''
                 }`}
@@ -205,7 +239,10 @@ const GapMode = () => {
                       return (
                         <span key={wi} className="inline-flex flex-col items-center">
                           <input
+                            ref={(el) => (inputRefs.current[key] = el)}
+                            onKeyDown={(e) => handleKeyDown(e, key)}
                             type="text"
+                            aria-label={`Missing word ${wi + 1} in line ${line.lineIdx + 1}`}
                             value={answer}
                             onChange={(e) => handleChange(key, e.target.value)}
                             disabled={submitted}
@@ -263,7 +300,7 @@ const GapMode = () => {
 
         {/* Score */}
         {submitted && (
-          <div className="bevel-box p-4 mt-4 text-center">
+          <div aria-live="polite" aria-atomic="true" className="bevel-box p-4 mt-4 text-center">
             <h3 className="font-pixel text-sm text-y2k-yellow mb-2">
               {correctGaps === totalGaps ? '🌟 PERFECT! 🌟' : correctGaps >= totalGaps * 0.7 ? '👍 GREAT JOB!' : '💪 KEEP TRYING!'}
             </h3>

@@ -7,6 +7,7 @@ import Index from "./pages/Index.tsx";
 import SingMode from "./pages/SingMode.tsx";
 import GapMode from "./pages/GapMode.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Profile from '@/pages/Profile';
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/sing/:songId" element={<SingMode />} />
           <Route path="/gaps/:songId" element={<GapMode />} />
           <Route path="*" element={<NotFound />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
